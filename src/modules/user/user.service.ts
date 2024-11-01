@@ -23,6 +23,10 @@ export class UserService {
       password: await bcrypt.hash(createUserDto.password, 10),
     };
 
+    const existUser = await this.prisma.user.findFirst({ where: { email: data.email } });
+
+    if (existUser) throw new UnauthorizedException('Usuário já existente');
+
     const createdUser = await this.prisma.user.create({ data });
 
     return {

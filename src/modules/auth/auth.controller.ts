@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 import { AuthRequest } from './models/AuthRequest';
 import { IsPublic } from './decorators/is-public.decorator';
 import { ApiTags } from '@nestjs/swagger';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 
 @Controller()
 export class AuthController {
@@ -18,7 +18,7 @@ export class AuthController {
 
   @ApiTags('Auth')
   @IsPublic()
-  @UseGuards(JwtStrategy)
+  @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Request() req: AuthRequest) {
