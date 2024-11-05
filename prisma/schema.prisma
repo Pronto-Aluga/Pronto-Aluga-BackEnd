@@ -17,6 +17,7 @@ model User {
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
   Profile    Profile?
+  Item       Item[]
 }
 
 model Profile {
@@ -42,6 +43,29 @@ model Address {
   zip_code     String
   district     String
   city         String
+}
+
+model Item {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  dailyRate     Float
+  minRentalDays Int
+  maxRentalDays Int
+  isActive      Boolean  @default(true)
+  isRented      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  photos        Json?
+  videoUrl      String?
+
+  cep          String
+  address      String
+  street       String
+  neighborhood String
+  number       String
 }
 
 enum DocumentType {
