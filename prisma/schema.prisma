@@ -18,6 +18,7 @@ model User {
   updated_at DateTime @default(now())
   Profile    Profile?
   Item       Item[]
+  Rental     Rental[]
 }
 
 model Profile {
@@ -66,6 +67,21 @@ model Item {
   street       String
   neighborhood String
   number       String
+  Rental       Rental[]
+}
+
+model Rental {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+  item          Item     @relation(fields: [itemId], references: [id])
+  itemId        Int
+  startDate     DateTime
+  endDate       DateTime
+  totalPrice    Float
+  paymentStatus String   @default("pending") // Ex: "pending", "paid", "failed"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 enum DocumentType {
