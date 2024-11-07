@@ -16,40 +16,50 @@ export class RentalService {
     });
   }
 
-  async createRental(userId: number, itemId: number, startDate: Date, endDate: Date) {
+  async createRental(userId: number, itemId: number, startDate: Date | string, endDate: Date | string) {
     const item = await this.prisma.item.findUnique({ where: { id: itemId } });
-
+  
     if (!item) {
-      throw new NotFoundException('Item não encontrado');
+      throw new NotFoundException('Item not found');
     }
-
+  
     if (item.isRented) {
-      throw new BadRequestException('Item já está alugado');
+      throw new BadRequestException('Item is already rented');
     }
-
-    const daysRented = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+    // Converte startDate e endDate para objetos Date, caso sejam strings
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+  
+    // Verifica se a conversão foi bem-sucedida e se as datas são válidas
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      throw new BadRequestException('Invalid start or end date');
+    }
+  
+    const daysRented = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     const totalPrice = daysRented * item.dailyRate;
-
+  
     const rental = await this.prisma.rental.create({
       data: {
         userId,
         itemId,
-        startDate,
-        endDate,
+        startDate: start, // Armazena como instância Date
+        endDate: end,     // Armazena como instância Date
         totalPrice,
         paymentStatus: 'pending',
       },
     });
-
-    // Criar Intent de pagamento no Stripe
+  
+    // Criar pagamento no Stripe
     const paymentIntent = await this.stripe.paymentIntents.create({
       amount: Math.round(totalPrice * 100), // Valor em centavos
-      currency: 'usd', // Defina a moeda desejada
+      currency: 'usd', // Altere para a moeda que preferir
       metadata: { rentalId: rental.id.toString(), userId: userId.toString() },
     });
-
-    return { rentalId: rental.id, clientSecret: paymentIntent.client_secret };
+  
+    return { rental, clientSecret: paymentIntent.client_secret };
   }
+  
 
   async confirmRentalPayment(rentalId: number) {
     await this.prisma.rental.update({
